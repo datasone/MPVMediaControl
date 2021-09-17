@@ -19,6 +19,7 @@ namespace MPVMediaControl
             public string Title;
             public string Artist;
             public string Path;
+            public string ShotPath;
 
             private static readonly string[] AudioFormats = new string[]
             {
@@ -52,99 +53,16 @@ namespace MPVMediaControl
                 return MediaPlaybackType.Unknown;
             }
 
-            public bool ThumbnailGenerated = false;
-
-            private readonly string _tmpFileName = System.IO.Path.GetTempFileName();
-
+            public bool ThumbnailObtained = false;
+            
             private IStorageFile _thumbnailFile;
 
             public IStorageFile ThumbnailFile()
             {
-                if (!ThumbnailGenerated)
+                if (!ThumbnailObtained)
                 {
-                    switch (Type())
-                    {
-                        case MediaPlaybackType.Image:
-                            var imageArgs = new[]
-                            {
-                                "-y", "-nostats", "-loglevel", "0", "-i", Path, "-vf", "scale=400:-1",
-                                "-f", "mjpeg", _tmpFileName,
-                            };
-                            var imageProcess = new Process();
-                            imageProcess.StartInfo.FileName = "ffmpeg.exe";
-                            imageProcess.StartInfo.Arguments = Utils.EscapeArguments(imageArgs);
-                            imageProcess.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                            imageProcess.StartInfo.CreateNoWindow = true;
-                            imageProcess.Start();
-                            imageProcess.WaitForExit();
-                            break;
-                        case MediaPlaybackType.Music:
-                            var musicArgs = new[]
-                            {
-                                "-y", "-nostats", "-loglevel", "0", "-i", Path, "-an", "-vf", "scale=400:-1",
-                                "-f", "mjpeg", _tmpFileName,
-                            };
-                            var musicProcess = new Process();
-                            musicProcess.StartInfo.FileName = "ffmpeg.exe";
-                            musicProcess.StartInfo.Arguments = Utils.EscapeArguments(musicArgs);
-                            musicProcess.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                            musicProcess.StartInfo.CreateNoWindow = true;
-                            musicProcess.Start();
-                            musicProcess.WaitForExit();
-                            break;
-                        case MediaPlaybackType.Video:
-                            var startSeconds = -1;
-
-                            var videoProbeArgs = new[]
-                            {
-                                "-loglevel", "0", "-show_entries", "stream=duration", Path
-                            };
-                            var videoProbeProcess = new Process();
-                            videoProbeProcess.StartInfo.RedirectStandardOutput = true;
-                            videoProbeProcess.StartInfo.FileName = "ffprobe.exe";
-                            videoProbeProcess.StartInfo.Arguments = Utils.EscapeArguments(videoProbeArgs);
-                            videoProbeProcess.StartInfo.UseShellExecute = false;
-                            videoProbeProcess.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                            videoProbeProcess.StartInfo.CreateNoWindow = true;
-                            videoProbeProcess.Start();
-                            var output = videoProbeProcess.StandardOutput.ReadToEnd();
-                            videoProbeProcess.WaitForExit();
-                            foreach (var line in output.Split(new[] { Environment.NewLine }, StringSplitOptions.None))
-                            {
-                                if (line.StartsWith("duration="))
-                                {
-                                    var durationStr = line.Substring(9, line.Length - 9).Split('.')[0];
-                                    if (int.TryParse(durationStr, out var durationValue))
-                                    {
-                                        startSeconds = durationValue / 4;
-                                    }
-                                    else
-                                    {
-                                        continue;
-                                    }
-                                }
-                            }
-
-                            if (startSeconds == -1)
-                                startSeconds = 30;
-
-                            var videoArgs = new[]
-                            {
-                                "-y", "-nostats", "-loglevel", "0", "-i", Path, "-vframes", "1", "-an",
-                                "-vf", "scale=400:-1", "-ss", startSeconds.ToString(), "-f", "mjpeg", _tmpFileName,
-                            };
-                            var videoProcess = new Process();
-                            videoProcess.StartInfo.FileName = "ffmpeg.exe";
-                            videoProcess.StartInfo.Arguments = Utils.EscapeArguments(videoArgs);
-                            videoProcess.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                            videoProcess.StartInfo.CreateNoWindow = true;
-                            videoProcess.Start();
-                            videoProcess.WaitForExit();
-                            break;
-                    }
-
-                    ThumbnailGenerated = true;
-                    _thumbnailFile = StorageFile.GetFileFromPathAsync(_tmpFileName).GetAwaiter().GetResult();
+                    ThumbnailObtained = true;
+                    _thumbnailFile = StorageFile.GetFileFromPathAsync(ShotPath).GetAwaiter().GetResult();
                 }
 
                 return _thumbnailFile;
@@ -152,9 +70,9 @@ namespace MPVMediaControl
 
             public void Cleanup()
             {
-                if (System.IO.File.Exists(_tmpFileName))
+                if (System.IO.File.Exists(ShotPath))
                 {
-                    System.IO.File.Delete(_tmpFileName);
+                    System.IO.File.Delete(ShotPath);
                 }
             }
         }
@@ -169,8 +87,9 @@ namespace MPVMediaControl
                 _file.Title = value.Title;
                 _file.Artist = value.Artist;
                 if (_file.Path != value.Path)
-                    _file.ThumbnailGenerated = false;
+                    _file.ThumbnailObtained = false;
                 _file.Path = value.Path;
+                _file.ShotPath = value.ShotPath;
 
                 _updater.ClearAll();
 

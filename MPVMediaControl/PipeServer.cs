@@ -144,6 +144,7 @@ namespace MPVMediaControl
             var title = FromHexString(parameters["title"]);
             var artist = FromHexString(parameters["artist"]);
             var path = FromHexString(parameters["path"]);
+            var shotPath = FromHexString(parameters["shot_path"]);
 
             // Processing metadata may take some time, so only checking path isn't enough.
             if (title == controller.File.Title &&
@@ -167,7 +168,8 @@ namespace MPVMediaControl
                 {
                     Title = title,
                     Artist = artist,
-                    Path = path
+                    Path = path,
+                    ShotPath = shotPath,
                 };
 
                 controller.File = file;
