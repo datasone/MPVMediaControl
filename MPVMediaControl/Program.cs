@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace MPVMediaControl
@@ -24,9 +26,8 @@ namespace MPVMediaControl
     public class MyAppContext : ApplicationContext
     {
         private readonly NotifyIcon _trayIcon;
-
-        public MainForm Main;
-        public MediaController Controller;
+        
+        public static List<MediaController> Controllers;
 
         public MyAppContext()
         {
@@ -43,10 +44,17 @@ namespace MPVMediaControl
 
             PipeServer.StartServer();
 
-            Main = new MainForm();
-            Main.Show();
-
-            Controller = new MediaController(Main.Handle);
+            Controllers = new List<MediaController>();
+        }
+        
+        public MediaController GetController(int pid)
+        {
+            if (Controllers.FindIndex(c => c.pid == pid) == -1)
+            {
+                Controllers.Add(new MediaController(pid));
+                return Controllers.Last();
+            }
+            return Controllers.Find(c => c.pid == pid);
         }
 
         private void Exit(object sender, EventArgs e)
@@ -55,7 +63,7 @@ namespace MPVMediaControl
 
             PipeServer.Cleanup();
 
-            Controller?.Cleanup();
+            Controllers.ForEach(i => i.Cleanup());
 
             Application.Exit();
             Environment.Exit(0);

@@ -10,11 +10,11 @@ namespace MPVMediaControl
 {
     class PipeClient
     {
-        public static void SendCommand(string command)
+        public static void SendCommand(int pid, string command)
         {
             new Thread(_ =>
             {
-                var pipeClient = new NamedPipeClientStream("mpvsocket");
+                var pipeClient = new NamedPipeClientStream($"mpvsocket_{pid}");
                 pipeClient.Connect();
 
                 var ss = new StreamString(pipeClient);

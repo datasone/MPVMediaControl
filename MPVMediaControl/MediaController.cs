@@ -12,6 +12,7 @@ namespace MPVMediaControl
     {
         private readonly SystemMediaTransportControls _controls;
         private readonly SystemMediaTransportControlsDisplayUpdater _updater;
+        public int pid;
 
         public class MCMediaFile
         {
@@ -223,8 +224,11 @@ namespace MPVMediaControl
             }
         }
 
-        public MediaController(IntPtr hWnd)
+        public MediaController(int pid)
         {
+            this.pid = pid;
+            var hWnd = Process.GetProcessById(pid).MainWindowHandle;
+
             _controls = SystemMediaTransportControlsInterop.GetForWindow(hWnd);
             _updater = _controls.DisplayUpdater;
 
@@ -242,7 +246,7 @@ namespace MPVMediaControl
             _file?.Cleanup();
         }
 
-        private static void ButtonPressed(SystemMediaTransportControls controls,
+        private void ButtonPressed(SystemMediaTransportControls controls,
             SystemMediaTransportControlsButtonPressedEventArgs args)
         {
             switch (args.Button)
@@ -262,22 +266,22 @@ namespace MPVMediaControl
             }
         }
 
-        private static void Play()
+        private void Play()
         {
-            PipeClient.SendCommand("{ \"command\": [\"set_property\", \"pause\", false] }\r\n");
-        }
-
-        private static void Pause()
-        {
-            PipeClient.SendCommand("{ \"command\": [\"set_property\", \"pause\", true] }\r\n");
-        }
-        private static void Next()
-        {
-            PipeClient.SendCommand("{ \"command\": [\"playlist-next\", \"weak\"] }\r\n");
-        }
-        private static void Previous()
-        {
-            PipeClient.SendCommand("{ \"command\": [\"playlist-prev\", \"weak\"] }\r\n");
+            PipeClient.SendCommand(pid, "{ \"command\": [\"set_property\", \"pause\", false] }\r\n");
+        }                          
+                                   
+        private void Pause()
+        {                          
+            PipeClient.SendCommand(pid, "{ \"command\": [\"set_property\", \"pause\", true] }\r\n");
+        }                          
+        private void Next() 
+        {                          
+            PipeClient.SendCommand(pid, "{ \"command\": [\"playlist-next\", \"weak\"] }\r\n");
+        }                          
+        private void Previous()
+        {                          
+            PipeClient.SendCommand(pid, "{ \"command\": [\"playlist-prev\", \"weak\"] }\r\n");
         }
     }
 }

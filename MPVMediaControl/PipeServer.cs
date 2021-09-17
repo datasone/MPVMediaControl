@@ -128,27 +128,38 @@ namespace MPVMediaControl
             return "";
         }
 
-        private static void ParseFile(Dictionary<string, string> parameters)
+        private static string FromHexString(string hexString)
         {
-            var title = parameters["title"];
-            var artist = parameters["artist"];
-            var path = parameters["path"];
+            var bytes = new byte[hexString.Length / 2];
+            for (var i = 0; i < bytes.Length; i++)
+            {
+                bytes[i] = Convert.ToByte(hexString.Substring(i * 2, 2), 16);
+            }
+
+            return Encoding.Unicode.GetString(bytes); // returns: "Hello world" for "48656C6C6F20776F726C64"
+        }
+
+        private static void ParseFile(MediaController controller, Dictionary<string, string> parameters)
+        {
+            var title = FromHexString(parameters["title"]);
+            var artist = FromHexString(parameters["artist"]);
+            var path = FromHexString(parameters["path"]);
 
             // Processing metadata may take some time, so only checking path isn't enough.
-            if (title == Program.AppContext.Controller.File.Title &&
-                artist == Program.AppContext.Controller.File.Artist &&
-                path == Program.AppContext.Controller.File.Path)
+            if (title == controller.File.Title &&
+                artist == controller.File.Artist &&
+                path == controller.File.Path)
                 return;
 
             if (path.Split('.').Last() == "edl")
             {
                 parameters["path"] = ParseEDL(path);
-                ParseFile(parameters);
+                ParseFile(controller, parameters);
             }
             else if (path.Split('.').Last() == "cue")
             {
                 parameters["path"] = ParseCUE(path);
-                ParseFile(parameters);
+                ParseFile(controller, parameters);
             }
             else
             {
@@ -159,7 +170,7 @@ namespace MPVMediaControl
                     Path = path
                 };
 
-                Program.AppContext.Controller.File = file;
+                controller.File = file;
             }
         }
 
@@ -182,7 +193,6 @@ namespace MPVMediaControl
                     var parameter = parameterStr.Substring(0, parameterStr.Length - 1);
                     var parameterName = parameter.Split('=')[0];
                     var parameterValue = parameter.Split('=')[1];
-                    parameterValue = parameterValue.Replace("\\\\[", "(").Replace("\\\\]", ")");
 
                     parameters.Add(parameterName, parameterValue);
                 }
@@ -191,20 +201,23 @@ namespace MPVMediaControl
                 Console.WriteLine(commandName);
 #endif
 
+                var pid = int.Parse(parameters["pid"]);
+                var controller = Program.AppContext.GetController(pid);
+
                 switch (commandName)
                 {
                     case "setFile":
-                        ParseFile(parameters);
+                        ParseFile(controller, parameters);
                         break;
 
                     case "setState":
                         var isPlaying = parameters["playing"] == "true";
-                        if (Program.AppContext != null && Program.AppContext.Controller != null && Program.AppContext.Controller.File.Path != null)
+                        if (Program.AppContext != null && controller != null && controller.File.Path != null)
                         {
                             var expectedState =
                                 isPlaying ? MediaController.PlayState.Play : MediaController.PlayState.Pause;
-                            if (Program.AppContext.Controller.State != expectedState)
-                                Program.AppContext.Controller.State = expectedState;
+                            if (controller.State != expectedState)
+                                controller.State = expectedState;
                         }
                         break;
 
@@ -212,10 +225,10 @@ namespace MPVMediaControl
                         var quit = parameters["quit"] == "true";
                         if (quit)
                         {
-                            if ((Program.AppContext != null && Program.AppContext.Controller != null) && Program.AppContext.Controller.File.Path != null)
+                            if ((Program.AppContext != null && controller != null) && controller.File.Path != null)
                             {
-                                if (Program.AppContext.Controller.State != MediaController.PlayState.Stop)
-                                    Program.AppContext.Controller.State = MediaController.PlayState.Stop;
+                                if (controller.State != MediaController.PlayState.Stop)
+                                    controller.State = MediaController.PlayState.Stop;
                             }
                         }
                         break;
