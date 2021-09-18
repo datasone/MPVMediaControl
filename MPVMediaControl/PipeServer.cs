@@ -54,7 +54,7 @@ namespace MPVMediaControl
                         var command = ss.ReadString();
 
 #if DEBUG
-                        // Console.WriteLine(command);
+                        Console.WriteLine(command);
 #endif
                         while (true)
                         {
@@ -136,7 +136,7 @@ namespace MPVMediaControl
                 bytes[i] = Convert.ToByte(hexString.Substring(i * 2, 2), 16);
             }
 
-            return Encoding.Unicode.GetString(bytes); // returns: "Hello world" for "48656C6C6F20776F726C64"
+            return System.Text.Encoding.UTF8.GetString(bytes); // returns: "Hello world" for "48656C6C6F20776F726C64"
         }
 
         private static void ParseFile(MediaController controller, Dictionary<string, string> parameters)
@@ -169,7 +169,7 @@ namespace MPVMediaControl
                     Title = title,
                     Artist = artist,
                     Path = path,
-                    ShotPath = shotPath,
+                    ShotPath = shotPath.Replace('/', '\\'),
                 };
 
                 controller.File = file;
@@ -231,6 +231,7 @@ namespace MPVMediaControl
                             {
                                 if (controller.State != MediaController.PlayState.Stop)
                                     controller.State = MediaController.PlayState.Stop;
+                                Program.AppContext.RemoveController(pid);
                             }
                         }
                         break;

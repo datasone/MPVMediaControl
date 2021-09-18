@@ -26,6 +26,8 @@ namespace MPVMediaControl
     public class MyAppContext : ApplicationContext
     {
         private readonly NotifyIcon _trayIcon;
+        private PlaceholderForm _form;
+        private IntPtr _handle;
         
         public static List<MediaController> Controllers;
 
@@ -45,6 +47,15 @@ namespace MPVMediaControl
             PipeServer.StartServer();
 
             Controllers = new List<MediaController>();
+
+            _form = new PlaceholderForm();
+            _form.FormBorderStyle = FormBorderStyle.FixedToolWindow;
+            _form.ShowInTaskbar = false;
+            _form.StartPosition = FormStartPosition.Manual;
+            _form.Location = new System.Drawing.Point(int.MinValue, int.MinValue);
+            _form.Size = new System.Drawing.Size(1, 1);
+            _form.Show();
+            _handle = _form.Handle;
         }
         
         public MediaController GetController(int pid)
@@ -55,6 +66,16 @@ namespace MPVMediaControl
                 return Controllers.Last();
             }
             return Controllers.Find(c => c.pid == pid);
+        }
+
+        public void RemoveController(int pid)
+        {
+            Controllers.RemoveAll(c => c.pid == pid);
+        }
+
+        public IntPtr GethWnd()
+        {
+            return _handle;
         }
 
         private void Exit(object sender, EventArgs e)

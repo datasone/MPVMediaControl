@@ -89,7 +89,7 @@ namespace MPVMediaControl
                 if (_file.Path != value.Path)
                     _file.ThumbnailObtained = false;
                 _file.Path = value.Path;
-                _file.ShotPath = value.ShotPath;
+                _file.ShotPath = value.ShotPath.Replace('/', '\\');
 
                 _updater.ClearAll();
 
@@ -146,7 +146,7 @@ namespace MPVMediaControl
         public MediaController(int pid)
         {
             this.pid = pid;
-            var hWnd = Process.GetProcessById(pid).MainWindowHandle;
+            var hWnd = Program.AppContext.GethWnd();
 
             _controls = SystemMediaTransportControlsInterop.GetForWindow(hWnd);
             _updater = _controls.DisplayUpdater;
@@ -163,6 +163,7 @@ namespace MPVMediaControl
         public void Cleanup()
         {
             _file?.Cleanup();
+            _updater.ClearAll();
         }
 
         private void ButtonPressed(SystemMediaTransportControls controls,
