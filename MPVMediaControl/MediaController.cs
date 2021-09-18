@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Threading;
 using UWPInterop;
 using Windows.Media;
 using Windows.Storage;
@@ -12,7 +14,9 @@ namespace MPVMediaControl
     {
         private readonly SystemMediaTransportControls _controls;
         private readonly SystemMediaTransportControlsDisplayUpdater _updater;
-        public int pid;
+        private readonly int _formIndex;
+
+        public int Pid;
 
         public class MCMediaFile
         {
@@ -23,7 +27,8 @@ namespace MPVMediaControl
 
             private static readonly string[] AudioFormats = new string[]
             {
-                "m4a", "wma", "aac", "adt", "adts", "mp3", "wav", "ac3", "ec3", "flac", "ape", "tta", "tak", "ogg", "opus",
+                "m4a", "wma", "aac", "adt", "adts", "mp3", "wav", "ac3", "ec3", "flac", "ape", "tta", "tak", "ogg",
+                "opus",
             };
 
             private static readonly string[] VideoFormats = new string[]
@@ -54,13 +59,20 @@ namespace MPVMediaControl
             }
 
             public bool ThumbnailObtained = false;
-            
+
             private IStorageFile _thumbnailFile;
 
             public IStorageFile ThumbnailFile()
             {
                 if (!ThumbnailObtained)
                 {
+                    Thread.Sleep(100);
+                    var count = 0;
+                    while (!System.IO.File.Exists(ShotPath) && count++ < 50)
+                    {
+                        Thread.Sleep(100);
+                    }
+
                     ThumbnailObtained = true;
                     _thumbnailFile = StorageFile.GetFileFromPathAsync(ShotPath).GetAwaiter().GetResult();
                 }
@@ -109,15 +121,28 @@ namespace MPVMediaControl
                         break;
                 }
 
-                _updater.Thumbnail = RandomAccessStreamReference.CreateFromFile(_file.ThumbnailFile());
+                try
+                {
+                    _updater.Thumbnail = RandomAccessStreamReference.CreateFromFile(_file.ThumbnailFile());
+                }
+                catch (Exception e) when (e is FileNotFoundException || e is UnauthorizedAccessException ||
+                                          e is ArgumentException)
+                {
+                }
 
                 _updater.Update();
             }
         }
 
-        public enum PlayState { Play, Pause, Stop }
+        public enum PlayState
+        {
+            Play,
+            Pause,
+            Stop
+        }
 
         private PlayState _state;
+
         public PlayState State
         {
             get => _state;
@@ -145,8 +170,9 @@ namespace MPVMediaControl
 
         public MediaController(int pid)
         {
-            this.pid = pid;
-            var hWnd = Program.AppContext.GethWnd();
+            this.Pid = pid;
+            var (index, hWnd) = Program.AppContext.CreateForm();
+            _formIndex = index;
 
             _controls = SystemMediaTransportControlsInterop.GetForWindow(hWnd);
             _updater = _controls.DisplayUpdater;
@@ -164,6 +190,7 @@ namespace MPVMediaControl
         {
             _file?.Cleanup();
             _updater.ClearAll();
+            Program.AppContext.RemoveForm(_formIndex);
         }
 
         private void ButtonPressed(SystemMediaTransportControls controls,
@@ -188,20 +215,22 @@ namespace MPVMediaControl
 
         private void Play()
         {
-            PipeClient.SendCommand(pid, "{ \"command\": [\"set_property\", \"pause\", false] }\r\n");
-        }                          
-                                   
+            PipeClient.SendCommand(Pid, "{ \"command\": [\"set_property\", \"pause\", false] }\r\n");
+        }
+
         private void Pause()
-        {                          
-            PipeClient.SendCommand(pid, "{ \"command\": [\"set_property\", \"pause\", true] }\r\n");
-        }                          
-        private void Next() 
-        {                          
-            PipeClient.SendCommand(pid, "{ \"command\": [\"playlist-next\", \"weak\"] }\r\n");
-        }                          
+        {
+            PipeClient.SendCommand(Pid, "{ \"command\": [\"set_property\", \"pause\", true] }\r\n");
+        }
+
+        private void Next()
+        {
+            PipeClient.SendCommand(Pid, "{ \"command\": [\"playlist-next\", \"weak\"] }\r\n");
+        }
+
         private void Previous()
-        {                          
-            PipeClient.SendCommand(pid, "{ \"command\": [\"playlist-prev\", \"weak\"] }\r\n");
+        {
+            PipeClient.SendCommand(Pid, "{ \"command\": [\"playlist-prev\", \"weak\"] }\r\n");
         }
     }
 }

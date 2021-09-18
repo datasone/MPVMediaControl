@@ -26,10 +26,8 @@ namespace MPVMediaControl
     public class MyAppContext : ApplicationContext
     {
         private readonly NotifyIcon _trayIcon;
-        private PlaceholderForm _form;
-        private IntPtr _handle;
-        
-        public static List<MediaController> Controllers;
+        private static List<PlaceholderForm> _forms;
+        private static List<MediaController> _controllers;
 
         public MyAppContext()
         {
@@ -46,36 +44,47 @@ namespace MPVMediaControl
 
             PipeServer.StartServer();
 
-            Controllers = new List<MediaController>();
-
-            _form = new PlaceholderForm();
-            _form.FormBorderStyle = FormBorderStyle.FixedToolWindow;
-            _form.ShowInTaskbar = false;
-            _form.StartPosition = FormStartPosition.Manual;
-            _form.Location = new System.Drawing.Point(int.MinValue, int.MinValue);
-            _form.Size = new System.Drawing.Size(1, 1);
-            _form.Show();
-            _handle = _form.Handle;
+            _controllers = new List<MediaController>();
+            _forms = new List<PlaceholderForm>();
         }
-        
+
+        public (int, IntPtr) CreateForm()
+        {
+            var form = new PlaceholderForm();
+            form.FormBorderStyle = FormBorderStyle.FixedToolWindow;
+            form.ShowInTaskbar = false;
+            form.StartPosition = FormStartPosition.Manual;
+            form.Location = new System.Drawing.Point(int.MinValue, int.MinValue);
+            form.Size = new System.Drawing.Size(1, 1);
+            form.Show();
+            var handle = form.Handle;
+            _forms.Add(form);
+            return (_forms.Count - 1, handle);
+        }
+
+        public void RemoveForm(int index)
+        {
+            var form = _forms[index];
+            _forms.RemoveAt(index);
+            form.BeginInvoke(new MethodInvoker(form.Close));
+        }
+
         public MediaController GetController(int pid)
         {
-            if (Controllers.FindIndex(c => c.pid == pid) == -1)
+            if (_controllers.FindIndex(c => c.Pid == pid) == -1)
             {
-                Controllers.Add(new MediaController(pid));
-                return Controllers.Last();
+                _controllers.Add(new MediaController(pid));
+                return _controllers.Last();
             }
-            return Controllers.Find(c => c.pid == pid);
+
+            return _controllers.Find(c => c.Pid == pid);
         }
 
         public void RemoveController(int pid)
         {
-            Controllers.RemoveAll(c => c.pid == pid);
-        }
-
-        public IntPtr GethWnd()
-        {
-            return _handle;
+            var controller = _controllers.Find(c => c.Pid == pid);
+            controller.Cleanup();
+            _controllers.Remove(controller);
         }
 
         private void Exit(object sender, EventArgs e)
@@ -84,7 +93,7 @@ namespace MPVMediaControl
 
             PipeServer.Cleanup();
 
-            Controllers.ForEach(i => i.Cleanup());
+            _controllers.ForEach(i => i.Cleanup());
 
             Application.Exit();
             Environment.Exit(0);

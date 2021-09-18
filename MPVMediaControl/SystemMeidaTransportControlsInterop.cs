@@ -1,4 +1,5 @@
 ﻿// From https://github.com/AdamBraden/WindowsInteropWrappers/blob/master/CoreWindowInterop/SystemMediaTransportControlsInterop.cs
+
 using System;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Media;
@@ -16,7 +17,8 @@ namespace UWPInterop
 
     //};
     [System.Runtime.InteropServices.Guid("ddb0472d-c911-4a1f-86d9-dc3d71a95f5a")]
-    [System.Runtime.InteropServices.InterfaceType(System.Runtime.InteropServices.ComInterfaceType.InterfaceIsIInspectable)]
+    [System.Runtime.InteropServices.InterfaceType(System.Runtime.InteropServices.ComInterfaceType
+        .InterfaceIsIInspectable)]
     interface ISystemMediaTransportControlsInterop
     {
         SystemMediaTransportControls GetForWindow(IntPtr appWindow, [System.Runtime.InteropServices.In] ref Guid riid);
@@ -27,7 +29,9 @@ namespace UWPInterop
     {
         public static SystemMediaTransportControls GetForWindow(IntPtr hWnd)
         {
-            ISystemMediaTransportControlsInterop systemMediaTransportControlsInterop = (ISystemMediaTransportControlsInterop)WindowsRuntimeMarshal.GetActivationFactory(typeof(SystemMediaTransportControls));
+            ISystemMediaTransportControlsInterop systemMediaTransportControlsInterop =
+                (ISystemMediaTransportControlsInterop)WindowsRuntimeMarshal.GetActivationFactory(
+                    typeof(SystemMediaTransportControls));
             Guid guid = new Guid("99FA3FF4-1742-42A6-902E-087D41F965EC");
 
             return systemMediaTransportControlsInterop.GetForWindow(hWnd, ref guid);

@@ -11,7 +11,7 @@ namespace MPVMediaControl
 {
     class PipeServer
     {
-        private const int NumThreads = 10;
+        private const int NumThreads = 16;
         private static readonly Thread[] Servers = new Thread[NumThreads];
 
         private static readonly object ParseLock = new object();
@@ -221,6 +221,7 @@ namespace MPVMediaControl
                             if (controller.State != expectedState)
                                 controller.State = expectedState;
                         }
+
                         break;
 
                     case "setQuit":
@@ -234,10 +235,10 @@ namespace MPVMediaControl
                                 Program.AppContext.RemoveController(pid);
                             }
                         }
+
                         break;
                 }
             }
         }
     }
-
 }
