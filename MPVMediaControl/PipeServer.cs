@@ -139,11 +139,11 @@ namespace MPVMediaControl
             return System.Text.Encoding.UTF8.GetString(bytes); // returns: "Hello world" for "48656C6C6F20776F726C64"
         }
 
-        private static void ParseFile(MediaController controller, Dictionary<string, string> parameters)
+        private static void ParseFile(MediaController controller, Dictionary<string, string> parameters, bool nonHexPath = false)
         {
             var title = FromHexString(parameters["title"]);
             var artist = FromHexString(parameters["artist"]);
-            var path = FromHexString(parameters["path"]);
+            var path = nonHexPath ? parameters["path"] : FromHexString(parameters["path"]);
             var shotPath = FromHexString(parameters["shot_path"]);
 
             // Processing metadata may take some time, so only checking path isn't enough.
@@ -155,12 +155,12 @@ namespace MPVMediaControl
             if (path.Split('.').Last() == "edl")
             {
                 parameters["path"] = ParseEDL(path);
-                ParseFile(controller, parameters);
+                ParseFile(controller, parameters, true);
             }
             else if (path.Split('.').Last() == "cue")
             {
                 parameters["path"] = ParseCUE(path);
-                ParseFile(controller, parameters);
+                ParseFile(controller, parameters, true);
             }
             else
             {
@@ -209,7 +209,7 @@ namespace MPVMediaControl
                 switch (commandName)
                 {
                     case "setFile":
-                        ParseFile(controller, parameters);
+                        ParseFile(controller, parameters, false);
                         break;
 
                     case "setState":
