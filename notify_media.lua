@@ -153,7 +153,7 @@ mp.set_property("options/input-ipc-server", "\\\\.\\pipe\\mpvsocket_" .. pid)
 REL_EXE_LOCATION = "MPVMediaControl.exe" --Name of the exe file in the script directory
 script_dir = mp.get_script_directory()
 exe_path = script_dir .. "/" .. REL_EXE_LOCATION
-mp.msg.info("Starting MPV-SMTC executable")
+mp.msg.info("Starting MPVMediaControl executable")
 mp.command_native({
     name = "subprocess",
     playback_only = false,
