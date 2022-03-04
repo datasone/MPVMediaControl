@@ -149,6 +149,20 @@ end
 
 mp.set_property("options/input-ipc-server", "\\\\.\\pipe\\mpvsocket_" .. pid)
 
+REL_EXE_LOCATION = "MPVMediaControl.exe" --Name of the exe file in the script directory
+script_dir = mp.get_script_directory()
+exe_path = script_dir .. "/" .. REL_EXE_LOCATION
+mp.msg.info("Starting MPVMediaControl executable")
+mp.command_native({
+    name = "subprocess",
+    playback_only = false,
+    capture_stdout = false,
+    detach = true,
+    args = {
+        exe_path,
+		},
+})
+
 mp.register_event("file-loaded", notify_current_file)
 mp.observe_property("metadata", nil, notify_metadata_updated)
 mp.observe_property("chapter", nil, notify_metadata_updated)
@@ -158,8 +172,23 @@ mp.observe_property("core-idle", nil, play_state_changed)
 function on_quit()
     if shot_path then
         os.remove(shot_path)
-    end
+    end	
     write_to_socket("^[setQuit](pid=" .. pid .. ")(quit=true)$")
+	mp.command_native({
+    name = "subprocess",
+    playback_only = false,
+    capture_stdout = false,
+    detach = true,
+    args = {
+        'powershell', '-NoProfile', '-Command', [[& {
+        Trap {
+          Write-Error -ErrorRecord $_
+          Exit 1
+        }
+		taskkill /IM MPVMediaControl.exe /F
+      }]]
+	},
+})
 end
 
 mp.register_event("shutdown", on_quit)
