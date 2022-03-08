@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using UWPInterop;
 using Windows.Media;
+using Windows.Media.Playback;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
@@ -14,7 +13,7 @@ namespace MPVMediaControl
     {
         private readonly SystemMediaTransportControls _controls;
         private readonly SystemMediaTransportControlsDisplayUpdater _updater;
-        private readonly int _formIndex;
+        private readonly MediaPlayer _mediaPlayer;
 
         public readonly int Pid;
 
@@ -171,10 +170,10 @@ namespace MPVMediaControl
         public MediaController(int pid)
         {
             this.Pid = pid;
-            var (index, hWnd) = Program.AppContext.CreateForm();
-            _formIndex = index;
+            _mediaPlayer = new MediaPlayer();
+            _controls = _mediaPlayer.SystemMediaTransportControls;
+            _mediaPlayer.CommandManager.IsEnabled = false;
 
-            _controls = SystemMediaTransportControlsInterop.GetForWindow(hWnd);
             _updater = _controls.DisplayUpdater;
 
             _controls.ButtonPressed += ButtonPressed;
@@ -190,7 +189,6 @@ namespace MPVMediaControl
         {
             _file?.Cleanup();
             _updater.ClearAll();
-            Program.AppContext.RemoveForm(_formIndex);
         }
 
         private void ButtonPressed(SystemMediaTransportControls controls,
