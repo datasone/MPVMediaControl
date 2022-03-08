@@ -46,7 +46,7 @@ namespace MPVMediaControl
                     {
                         pipeServer.WaitForConnection();
 #if DEBUG
-                        Console.WriteLine($"{Thread.CurrentThread.ManagedThreadId} Received message");
+                        System.Diagnostics.Debug.WriteLine($"{Thread.CurrentThread.ManagedThreadId} Received message");
 #endif
                         CommandQueue.Enqueue(Thread.CurrentThread.ManagedThreadId);
 
@@ -54,7 +54,7 @@ namespace MPVMediaControl
                         var command = ss.ReadString();
 
 #if DEBUG
-                        Console.WriteLine(command);
+                        System.Diagnostics.Debug.WriteLine(command);
 #endif
                         while (true)
                         {
@@ -62,7 +62,7 @@ namespace MPVMediaControl
                             {
 #if DEBUG
                                 CommandQueue.TryPeek(out var nextId);
-                                Console.WriteLine(
+                                System.Diagnostics.Debug.WriteLine(
                                     $"Next ID is {nextId}, current thread is {Thread.CurrentThread.ManagedThreadId}");
 #endif
                                 if (!CommandQueue.TryPeek(out var id) || id != Thread.CurrentThread.ManagedThreadId)
@@ -136,7 +136,7 @@ namespace MPVMediaControl
                 bytes[i] = Convert.ToByte(hexString.Substring(i * 2, 2), 16);
             }
 
-            return System.Text.Encoding.UTF8.GetString(bytes); // returns: "Hello world" for "48656C6C6F20776F726C64"
+            return Encoding.UTF8.GetString(bytes); // returns: "Hello world" for "48656C6C6F20776F726C64"
         }
 
         private static void ParseFile(MediaController controller, Dictionary<string, string> parameters, bool nonHexPath = false)
@@ -200,7 +200,7 @@ namespace MPVMediaControl
                 }
 
 #if DEBUG
-                Console.WriteLine(commandName);
+                System.Diagnostics.Debug.WriteLine(commandName);
 #endif
 
                 var pid = int.Parse(parameters["pid"]);

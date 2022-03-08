@@ -16,7 +16,7 @@ namespace MPVMediaControl
         private readonly SystemMediaTransportControlsDisplayUpdater _updater;
         private readonly int _formIndex;
 
-        public int Pid;
+        public readonly int Pid;
 
         public class MCMediaFile
         {
@@ -25,18 +25,18 @@ namespace MPVMediaControl
             public string Path;
             public string ShotPath;
 
-            private static readonly string[] AudioFormats = new string[]
+            private static readonly string[] AudioFormats =
             {
                 "m4a", "wma", "aac", "adt", "adts", "mp3", "wav", "ac3", "ec3", "flac", "ape", "tta", "tak", "ogg",
                 "opus",
             };
 
-            private static readonly string[] VideoFormats = new string[]
+            private static readonly string[] VideoFormats =
             {
                 "3g2", "3gp2", "3gp", "3gpp", "m4v", "mp4v", "mp4", "mov", "m2ts", "asf", "wmv", "avi", "mkv",
             };
 
-            private static readonly string[] ImageFormats = new string[]
+            private static readonly string[] ImageFormats =
             {
                 "tif", "tiff", "png", "jpg", "gif"
             };
@@ -89,7 +89,7 @@ namespace MPVMediaControl
             }
         }
 
-        private MCMediaFile _file = new MCMediaFile();
+        private readonly MCMediaFile _file = new MCMediaFile();
 
         public MCMediaFile File
         {

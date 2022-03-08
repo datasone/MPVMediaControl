@@ -31,11 +31,11 @@ namespace MPVMediaControl
 
         public MyAppContext()
         {
-            _trayIcon = new NotifyIcon()
+            _trayIcon = new NotifyIcon
             {
                 Text = "MPV Media Control",
                 Icon = new Icon(SystemIcons.Application, 32, 32),
-                ContextMenu = new ContextMenu(new MenuItem[]
+                ContextMenu = new ContextMenu(new []
                 {
                     new MenuItem("Exit", Exit)
                 }),
