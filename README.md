@@ -11,7 +11,8 @@ This tool adds SMTC feature to mpv player, it communicates with mpv by named pip
 - Media controls (play/pause, prev, next)
 
 ## Usage
-Put `notify_media.lua` in mpv's `scripts` directory and make sure `MPVMediaControl` is running in background.
+Put `notify_media.lua` in mpv's `scripts` directory and change path in the script to the real path of `MPVMediaControl.exe`.
+A `Reset SMTC` item in menu will reset the state of SMTC, useful when Windows is glitched and controls are not working properly.
 
 ## Protocol
 This tool listens on a named pipe called `mpvmcsocket`, and receives commands through this protocol:
@@ -27,6 +28,7 @@ e.g.
 
 ### Commands
 - `setFile`: set currently playing file
+- `setShot`: set screenshot file path
 - `setState`: set player state (playing or not)
 - `setQuit`: notify the tool that player has quit, and the SMTC should be cleared
 
@@ -37,9 +39,11 @@ e.g.
   - `title={hexString}`: the title of the media file
   - `artist={hexString}`: the artist of the media file, music files only. The value can be empty.
   - `path={hexString}`: the path of the media file
+  - `type={music,video,image}`: the type of the media file
+- Parameters for `setShot`
   - `shot_path={hexString}`: the path of the thumbnail image file. The value can be empty.
-  
-  The `hexString` mentioned above means the original string should be encoded to hex, e.g. `Hello <=> 48656C6C6F`
+
+The `hexString` mentioned above means the original string should be encoded to hex, e.g. `Hello <=> 48656C6C6F`
 - Parameters for `setState`
   - `playing={bool}`: if the media is being played, `true` for playing, `false` for pausing
 - Parameters for `setQuit`
