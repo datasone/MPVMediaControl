@@ -1,4 +1,6 @@
 DEBUG = false
+-- Change this to the location of MPVMediaControl.exe, use \\ for path separator
+MPVMC_PATH = "X:\\path\\to\\MPVMediaControl.exe"
 
 local utils = require 'mp.utils'
 pid = utils.getpid()
@@ -143,8 +145,23 @@ function play_state_changed()
     end
 end
 
-function notify_metadata_updated()
-    notify_current_file()
+function notify_current_file()
+    -- Even all things are right in MPVMediaControl, there may be native crash caused by Windows itself (SHCORE.dll).
+    -- This line let mpv run the program again when a new file is loaded, help mitigating the problem.
+    -- It won't cost much as MPVMC will not allow multiple instances to be started. But if you don't want this, comment out the line below.
+    run_mpvmc_program()
+    notify_metadata_updated()
+end
+
+function run_mpvmc_program()
+    mp.command_native({
+        name = "subprocess",
+        playback_only = false,
+        capture_stdout = false,
+        capture_stderr = false,
+        detach = true,
+        args = { MPVMC_PATH },
+    })
 end
 
 mp.set_property("options/input-ipc-server", "\\\\.\\pipe\\mpvsocket_" .. pid)
