@@ -98,7 +98,7 @@ namespace MPVMediaControl
             return Encoding.UTF8.GetString(bytes); // returns: "Hello world" for "48656C6C6F20776F726C64"
         }
 
-        private static void ParseFile(MediaController controller, Dictionary<string, string> parameters, bool nonHexPath = false)
+        private static void ParseFile(MediaController controller, Dictionary<string, string> parameters)
         {
             var title = FromHexString(parameters["title"]);
             var artist = FromHexString(parameters["artist"]);

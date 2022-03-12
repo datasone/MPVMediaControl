@@ -117,7 +117,7 @@ function notify_metadata_updated()
     end
 
     if not title or title == "" then
-        title = mp.get_property_native("filename/no-ext")
+        title = mp.get_property_native("media-title")
     end
 
     path = mp.get_property_native("path")
@@ -180,6 +180,7 @@ end
 mp.set_property("options/input-ipc-server", "\\\\.\\pipe\\mpvsocket_" .. pid)
 
 mp.register_event("file-loaded", notify_current_file)
+mp.observe_property("media-title", nil, notify_metadata_updated)
 mp.observe_property("metadata", nil, notify_metadata_updated)
 mp.observe_property("chapter", nil, notify_metadata_updated)
 mp.register_event("end-file", play_state_changed)
