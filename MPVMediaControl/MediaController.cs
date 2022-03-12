@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using Windows.Media;
 using Windows.Media.Playback;
@@ -11,9 +10,9 @@ namespace MPVMediaControl
 {
     public class MediaController
     {
-        private readonly SystemMediaTransportControls _controls;
-        private readonly SystemMediaTransportControlsDisplayUpdater _updater;
-        private readonly MediaPlayer _mediaPlayer;
+        private SystemMediaTransportControls _controls;
+        private SystemMediaTransportControlsDisplayUpdater _updater;
+        private MediaPlayer _mediaPlayer;
 
         public readonly int Pid;
 
@@ -54,9 +53,14 @@ namespace MPVMediaControl
                     System.IO.File.Delete(ShotPath);
                 }
             }
+
+            public MCMediaFile Clone()
+            {
+                return this.MemberwiseClone() as MCMediaFile;
+            }
         }
 
-        private readonly MCMediaFile _file = new MCMediaFile();
+        private MCMediaFile _file = new MCMediaFile();
 
         public MCMediaFile File
         {
@@ -140,9 +144,8 @@ namespace MPVMediaControl
             }
         }
 
-        public MediaController(int pid)
+        public void InitSMTC()
         {
-            this.Pid = pid;
             _mediaPlayer = new MediaPlayer();
             _controls = _mediaPlayer.SystemMediaTransportControls;
             _mediaPlayer.CommandManager.IsEnabled = false;
@@ -155,13 +158,45 @@ namespace MPVMediaControl
             _controls.IsNextEnabled = true;
             _controls.IsPreviousEnabled = true;
 
-            State = PlayState.Stop;
+            State = _state;
+
+            if (_file.Path != null)
+            {
+                File = _file;
+            }
+        }
+        
+        public MediaController(int pid, bool initSMTC)
+        {
+            this.Pid = pid;
+            _state = PlayState.Stop;
+
+            if (initSMTC)
+            {
+                InitSMTC();
+            }
         }
 
-        public void Cleanup()
+        public MediaController DuplicateSelf()
         {
-            _file?.Cleanup();
+            var newObj = new MediaController(Pid, false);
+            newObj._file = _file.Clone();
+            newObj._state = _state;
+            return newObj;
+        }
+
+        public void Cleanup(bool cleanFile)
+        {
+            if (cleanFile)
+            {
+                _file?.Cleanup();
+            }
             _updater.ClearAll();
+            
+            // Ensure objects collected while "resetting SMTC"
+            _updater = null;
+            _controls = null;
+            _mediaPlayer = null;
         }
 
         public void UpdateShotPath(string path)

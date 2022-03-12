@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace MPVMediaControl
@@ -47,6 +48,7 @@ namespace MPVMediaControl
                 Icon = new Icon(SystemIcons.Application, 32, 32),
                 ContextMenu = new ContextMenu(new []
                 {
+                    new MenuItem("Reset SMTC", ResetControllers),
                     new MenuItem("Exit", Exit)
                 }),
                 Visible = true
@@ -61,7 +63,7 @@ namespace MPVMediaControl
         {
             if (_controllers.FindIndex(c => c.Pid == pid) == -1)
             {
-                _controllers.Add(new MediaController(pid));
+                _controllers.Add(new MediaController(pid, true));
                 return _controllers.Last();
             }
 
@@ -71,8 +73,29 @@ namespace MPVMediaControl
         public void RemoveController(int pid)
         {
             var controller = _controllers.Find(c => c.Pid == pid);
-            controller.Cleanup();
+            controller.Cleanup(true);
             _controllers.Remove(controller);
+        }
+
+        private async void ResetControllers(object sender, EventArgs e)
+        {
+            var newControllers = _controllers.Select(c => c.DuplicateSelf()).ToList();
+
+            _controllers.ForEach(c => c.Cleanup(false));
+            _controllers.Clear();
+            
+            // We need to manually trigger GC to remove MusicPlayer instances and prevent duplicate SMTC controls
+            GC.Collect();
+            
+            _controllers.AddRange(newControllers);
+            
+            // There is a bug in Windows where the control is not visible (but exists and is able to interact) if the info is updated too fast
+            // Sleep for a bit to prevent this
+            foreach (var controller in _controllers)
+            {
+                await Task.Delay(400);
+                controller.InitSMTC();
+            }
         }
 
         private void Exit(object sender, EventArgs e)
@@ -81,7 +104,7 @@ namespace MPVMediaControl
 
             PipeServer.Cleanup();
 
-            _controllers.ForEach(i => i.Cleanup());
+            _controllers.ForEach(i => i.Cleanup(true));
 
             Application.Exit();
             Environment.Exit(0);
