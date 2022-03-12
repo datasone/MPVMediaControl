@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace MPVMediaControl
@@ -9,6 +10,7 @@ namespace MPVMediaControl
     internal static class Program
     {
         public static MyAppContext AppContext;
+        private const string Guid = "851aefa6-d429-4f3b-9047-7e08d35810ad";
 
         /// <summary>
         /// The main entry point for the application.
@@ -16,10 +18,19 @@ namespace MPVMediaControl
         [STAThread]
         private static void Main()
         {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            AppContext = new MyAppContext();
-            Application.Run(AppContext);
+            using (Mutex mutex = new Mutex(false, "Global\\CrystalLyrics_" + Guid))
+            {
+                if (!mutex.WaitOne(0, false))
+                {
+                    System.Diagnostics.Debug.WriteLine("Another instance of this application is already running.");
+                    return;
+                }
+
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                AppContext = new MyAppContext();
+                Application.Run(AppContext);
+            }
         }
     }
 
@@ -74,6 +85,14 @@ namespace MPVMediaControl
 
             Application.Exit();
             Environment.Exit(0);
+        }
+
+        public async void ExitIfNoControllers()
+        {
+            if (_controllers.Count == 0)
+            {
+                await Task.Run(() => Exit(null, null));
+            }
         }
     }
 }

@@ -233,6 +233,8 @@ namespace MPVMediaControl
                                 if (controller.State != MediaController.PlayState.Stop)
                                     controller.State = MediaController.PlayState.Stop;
                                 Program.AppContext.RemoveController(pid);
+
+                                Program.AppContext.ExitIfNoControllers();
                             }
                         }
 
