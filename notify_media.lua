@@ -107,7 +107,7 @@ function notify_current_file()
     path = mp.get_property_native("path")
     if path:sub(2, 3) ~= ":\\" and path:sub(2, 3) ~= ":/" then
         dir = mp.get_property_native("working-directory")
-        path = dir + "\\" + path
+        path = dir .. "\\" .. path
     end
 
     if not artist then
