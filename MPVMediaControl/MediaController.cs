@@ -23,39 +23,7 @@ namespace MPVMediaControl
             public string Artist;
             public string Path;
             public string ShotPath;
-
-            private static readonly string[] AudioFormats =
-            {
-                "m4a", "wma", "aac", "adt", "adts", "mp3", "wav", "ac3", "ec3", "flac", "ape", "tta", "tak", "ogg",
-                "opus",
-            };
-
-            private static readonly string[] VideoFormats =
-            {
-                "3g2", "3gp2", "3gp", "3gpp", "m4v", "mp4v", "mp4", "mov", "m2ts", "asf", "wmv", "avi", "mkv",
-            };
-
-            private static readonly string[] ImageFormats =
-            {
-                "tif", "tiff", "png", "jpg", "gif"
-            };
-
-            public MediaPlaybackType Type()
-            {
-                var fileName = Path.Split('\\').Last();
-                if (fileName.Split('.').Length == 1)
-                    return MediaPlaybackType.Unknown;
-
-                var extName = fileName.Split('.').Last();
-                if (AudioFormats.Contains(extName))
-                    return MediaPlaybackType.Music;
-                if (VideoFormats.Contains(extName))
-                    return MediaPlaybackType.Video;
-                if (ImageFormats.Contains(extName))
-                    return MediaPlaybackType.Image;
-
-                return MediaPlaybackType.Unknown;
-            }
+            public MediaPlaybackType Type;
 
             public bool ThumbnailObtained = false;
 
@@ -101,12 +69,13 @@ namespace MPVMediaControl
                     _file.ThumbnailObtained = false;
                 _file.Path = value.Path;
                 _file.ShotPath = value.ShotPath.Replace('/', '\\');
+                _file.Type = value.Type;
 
                 _updater.ClearAll();
 
-                _updater.Type = _file.Type();
+                _updater.Type = _file.Type;
 
-                switch (_file.Type())
+                switch (_file.Type)
                 {
                     case MediaPlaybackType.Image:
                         _updater.ImageProperties.Title = _file.Title;

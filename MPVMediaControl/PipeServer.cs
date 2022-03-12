@@ -6,6 +6,7 @@ using System.IO.Pipes;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using Windows.Media;
 
 namespace MPVMediaControl
 {
@@ -86,48 +87,6 @@ namespace MPVMediaControl
             }
         }
 
-        private static string ParseEDL(string edlFilePath)
-        {
-            // Only select first file as syncing play time to decide file is too much for thumbnail generation.
-            var content = File.ReadAllLines(edlFilePath);
-            foreach (var line in content)
-            {
-                if (line.StartsWith("#")) continue;
-                if (line.StartsWith("%"))
-                {
-                    var byteLenStr = line.Split('%')[1];
-                    var success = int.TryParse(byteLenStr, out var byteLength);
-                    if (!success)
-                        continue;
-                    var restPart = line.Substring(2 + byteLenStr.Length);
-                    var restPartInBytes = Encoding.UTF8.GetBytes(restPart);
-                    var fileNameInBytes = restPartInBytes.Take(byteLength).ToArray();
-                    return Encoding.UTF8.GetString(fileNameInBytes);
-                }
-                else
-                {
-                    return line.Split(',')[0];
-                }
-            }
-
-            return "";
-        }
-
-        private static string ParseCUE(string cueFilePath)
-        {
-            var parentPath = cueFilePath.Substring(0, cueFilePath.LastIndexOf(Path.DirectorySeparatorChar) + 1);
-            var content = File.ReadAllLines(cueFilePath);
-            foreach (var line in content)
-            {
-                if (!line.StartsWith("FILE")) continue;
-                var prefixLen = 6; // "FILE \""
-                var suffixLen = line.Split('"').Last().Length + 1;
-                return parentPath + line.Substring(prefixLen, line.Length - prefixLen - suffixLen);
-            }
-
-            return "";
-        }
-
         private static string FromHexString(string hexString)
         {
             var bytes = new byte[hexString.Length / 2];
@@ -143,8 +102,26 @@ namespace MPVMediaControl
         {
             var title = FromHexString(parameters["title"]);
             var artist = FromHexString(parameters["artist"]);
-            var path = nonHexPath ? parameters["path"] : FromHexString(parameters["path"]);
-            var shotPath = FromHexString(parameters["shot_path"]);
+            var path = FromHexString(parameters["path"]);
+            var shotPath = parameters.ContainsKey("shot_path") ? FromHexString(parameters["shot_path"]) : String.Empty;
+
+            // Using MediaPlaybackType.Unknown will cause exception, so another default value has to be set
+            var type = MediaPlaybackType.Music;
+            if (parameters.ContainsKey("type"))
+            {
+                switch (parameters["type"])
+                {
+                    case "video":
+                        type = MediaPlaybackType.Video;
+                        break;
+                    case "music":
+                        type = MediaPlaybackType.Music;
+                        break;
+                    case "image":
+                        type = MediaPlaybackType.Image;
+                        break;
+                }
+            }
 
             // Processing metadata may take some time, so only checking path isn't enough.
             if (title == controller.File.Title &&
@@ -152,28 +129,16 @@ namespace MPVMediaControl
                 path == controller.File.Path)
                 return;
 
-            if (path.Split('.').Last() == "edl")
+            var file = new MediaController.MCMediaFile
             {
-                parameters["path"] = ParseEDL(path);
-                ParseFile(controller, parameters, true);
-            }
-            else if (path.Split('.').Last() == "cue")
-            {
-                parameters["path"] = ParseCUE(path);
-                ParseFile(controller, parameters, true);
-            }
-            else
-            {
-                var file = new MediaController.MCMediaFile
-                {
-                    Title = title,
-                    Artist = artist,
-                    Path = path,
-                    ShotPath = shotPath.Replace('/', '\\'),
-                };
+                Title = title,
+                Artist = artist,
+                Path = path,
+                ShotPath = shotPath.Replace('/', '\\'),
+                Type = type,
+            };
 
-                controller.File = file;
-            }
+            controller.File = file;
         }
 
         private static void ParseCommand(string command)
@@ -209,7 +174,7 @@ namespace MPVMediaControl
                 switch (commandName)
                 {
                     case "setFile":
-                        ParseFile(controller, parameters, false);
+                        ParseFile(controller, parameters);
                         break;
 
                     case "setState":

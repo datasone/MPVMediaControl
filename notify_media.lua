@@ -80,7 +80,17 @@ function save_shot(path)
     end
 end
 
-function notify_current_file()
+function media_type()
+    fps = mp.get_property_native("estimated-vf-fps")
+
+    if fps and fps > 1 then
+        return "video"
+    else
+        return "music"
+    end
+end
+
+function notify_metadata_updated()
     metadata = mp.get_property_native("metadata")
     debug_log(metadata)
     if not metadata then
@@ -132,7 +142,7 @@ function notify_current_file()
     shot_path = user_path .. "\\" .. pid .. ".jpg"
     save_shot(shot_path)
 
-    message_content = "^[setFile](pid=" .. pid .. ")(title=" .. title .. ")(artist=" .. artist .. ")(path=" .. path .. ")$"
+    message_content = "^[setFile](pid=" .. pid .. ")(title=" .. title .. ")(artist=" .. artist .. ")(path=" .. path .. ")(type=" .. media_type() .. ")$"
     write_to_socket(message_content)
 end
 
