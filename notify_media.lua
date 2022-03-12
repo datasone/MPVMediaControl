@@ -7,13 +7,13 @@ pid = utils.getpid()
 -- `indent` sets the initial level of indentation.
 function tprint (tbl, indent)
     if not indent then indent = 0 end
-        for k, v in pairs(tbl) do
-            formatting = string.rep("  ", indent) .. k .. ": "
+    for k, v in pairs(tbl) do
+        formatting = string.rep("  ", indent) .. k .. ": "
         if type(v) == "table" then
             print(formatting)
             tprint(v, indent+1)
         elseif type(v) == 'boolean' then
-            print(formatting .. tostring(v))      
+            print(formatting .. tostring(v))
         else
             print(formatting .. v)
         end
@@ -137,7 +137,7 @@ function play_state_changed()
 
     message_content = "^[setState](pid=" .. pid .. ")(playing=" .. tostring(is_playing) .. ")$"
     write_to_socket(message_content)
-    
+
     if not idle then
         mp.add_timeout(10, play_state_changed)
     end
