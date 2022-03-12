@@ -239,6 +239,11 @@ namespace MPVMediaControl
                         }
 
                         break;
+
+                    case "setShot":
+                        var shotPath = parameters["shot_path"];
+                        controller.UpdateShotPath(FromHexString(shotPath));
+                        break;
                 }
             }
         }

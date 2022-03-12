@@ -73,6 +73,10 @@ function save_shot(path)
     result = mp.commandv("screenshot-to-file", path)
     if not result then
         mp.add_timeout(0.1, function() save_shot(path) end)
+    else
+        local shot_path_encoded = encode_element(shot_path)
+        message_content = "^[setShot](pid=" .. pid .. ")(shot_path=" .. shot_path_encoded .. ")$"
+        write_to_socket(message_content)
     end
 end
 
@@ -127,9 +131,8 @@ function notify_current_file()
     local user_path = mp.command_native({"expand-path", "~~/"})
     shot_path = user_path .. "\\" .. pid .. ".jpg"
     save_shot(shot_path)
-    local shot_path_encoded = encode_element(shot_path)
 
-    message_content = "^[setFile](pid=" .. pid .. ")(title=" .. title .. ")(artist=" .. artist .. ")(path=" .. path .. ")(shot_path=" .. shot_path_encoded .. ")$"
+    message_content = "^[setFile](pid=" .. pid .. ")(title=" .. title .. ")(artist=" .. artist .. ")(path=" .. path .. ")$"
     write_to_socket(message_content)
 end
 

@@ -63,7 +63,7 @@ namespace MPVMediaControl
 
             public IStorageFile ThumbnailFile()
             {
-                if (!ThumbnailObtained)
+                if (!ThumbnailObtained && ShotPath != "")
                 {
                     Thread.Sleep(100);
                     var count = 0;
@@ -122,7 +122,11 @@ namespace MPVMediaControl
 
                 try
                 {
-                    _updater.Thumbnail = RandomAccessStreamReference.CreateFromFile(_file.ThumbnailFile());
+                    var file = _file.ThumbnailFile();
+                    if (file != null)
+                    {
+                        _updater.Thumbnail = RandomAccessStreamReference.CreateFromFile(file);
+                    }
                 }
                 catch (Exception e) when (e is FileNotFoundException || e is UnauthorizedAccessException ||
                                           e is ArgumentException)
@@ -189,6 +193,23 @@ namespace MPVMediaControl
         {
             _file?.Cleanup();
             _updater.ClearAll();
+        }
+
+        public void UpdateShotPath(string path)
+        {
+            File.ShotPath = path.Replace('/', '\\');
+            File.ThumbnailObtained = false;
+
+            try
+            {
+                _updater.Thumbnail = RandomAccessStreamReference.CreateFromFile(_file.ThumbnailFile());
+            }
+            catch (Exception e) when (e is FileNotFoundException || e is UnauthorizedAccessException ||
+                                      e is ArgumentException)
+            {
+            }
+
+            _updater.Update();
         }
 
         private void ButtonPressed(SystemMediaTransportControls controls,
