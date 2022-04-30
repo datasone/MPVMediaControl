@@ -1,9 +1,13 @@
 DEBUG = false
 -- Change this to the location of MPVMediaControl.exe, use \\ for path separator
 MPVMC_PATH = "X:\\path\\to\\MPVMediaControl.exe"
+-- If you want to delay taking screenshot for videos, set this to the number of delayed seconds
+DELAYED_SEC = 3
 
 local utils = require 'mp.utils'
 pid = utils.getpid()
+start_of_file = true
+new_file = false
 
 -- Print contents of `tbl`, with indentation.
 -- `indent` sets the initial level of indentation.
@@ -70,6 +74,11 @@ function tohex(str)
 end
 
 function save_shot(path)
+    if start_of_file and media_type() == "video" and DELAYED_SEC ~= 0 then
+        mp.add_timeout(DELAYED_SEC, function() save_shot(path) end)
+        start_of_file = false
+        return
+    end
     result = mp.commandv("screenshot-to-file", path)
     if not result then
         mp.add_timeout(0.5, function() save_shot(path) end)
@@ -180,14 +189,19 @@ end
 mp.set_property("options/input-ipc-server", "\\\\.\\pipe\\mpvsocket_" .. pid)
 
 function start_register_event()
-    mp.observe_property("media-title", nil, notify_metadata_updated)
-    mp.observe_property("metadata", nil, notify_metadata_updated)
-    mp.observe_property("chapter", nil, notify_metadata_updated)
-    mp.register_event("end-file", play_state_changed)
-    mp.observe_property("core-idle", nil, play_state_changed)
-    notify_current_file()
+    if new_file then
+        notify_current_file()
+        start_of_file = true
+        new_file = false
+        mp.observe_property("media-title", nil, notify_metadata_updated)
+        mp.observe_property("metadata", nil, notify_metadata_updated)
+        mp.observe_property("chapter", nil, notify_metadata_updated)
+        mp.register_event("end-file", play_state_changed)
+        mp.observe_property("core-idle", nil, play_state_changed)
+    end
 end
 
+mp.register_event("file-loaded", function() new_file = true end)
 mp.register_event("playback-restart", start_register_event)
 
 function on_quit()
