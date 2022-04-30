@@ -7,12 +7,15 @@ This tool adds SMTC feature to mpv player, it communicates with mpv by named pip
 
 ## Features
 - Media metadata display including title and artist information
-- Thumbnail generated from mpv screenshot
+- Thumbnail generated from mpv screenshot or youtube cover image
 - Media controls (play/pause, prev, next)
 
 ## Usage
 Put `notify_media.lua` in mpv's `scripts` directory and change path in the script to the real path of `MPVMediaControl.exe`.
-A `Reset SMTC` item in menu will reset the state of SMTC, useful when Windows is glitched and controls are not working properly.
+
+A `Reset SMTC` item in menu will reset the state of SMTC, useful when Windows is glitched and controls are not working properly (e.g. not displaying or disappearing).
+
+For retrieving youtube cover image, `curl.exe` is used. It has been bundled in Windows 10 since [1803, or actually build 17063](https://devblogs.microsoft.com/commandline/tar-and-curl-come-to-windows/). So if you are using older versions of Windows, you may need to manually download and put `curl.exe` into $PATH.
 
 ## Protocol
 This tool listens on a named pipe called `mpvmcsocket`, and receives commands through this protocol:

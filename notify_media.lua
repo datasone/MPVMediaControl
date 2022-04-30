@@ -8,6 +8,8 @@ local utils = require 'mp.utils'
 pid = utils.getpid()
 start_of_file = true
 new_file = false
+yt_thumbnail = false
+yt_failed = false
 
 -- Print contents of `tbl`, with indentation.
 -- `indent` sets the initial level of indentation.
@@ -74,6 +76,12 @@ function tohex(str)
 end
 
 function save_shot(path)
+    if youtube_thumbail(path) then
+        local shot_path_encoded = encode_element(shot_path)
+        message_content = "^[setShot](pid=" .. pid .. ")(shot_path=" .. shot_path_encoded .. ")$"
+        write_to_socket(message_content)
+        return
+    end
     if start_of_file and media_type() == "video" and DELAYED_SEC ~= 0 then
         mp.add_timeout(DELAYED_SEC, function() save_shot(path) end)
         start_of_file = false
@@ -87,6 +95,34 @@ function save_shot(path)
         message_content = "^[setShot](pid=" .. pid .. ")(shot_path=" .. shot_path_encoded .. ")$"
         write_to_socket(message_content)
     end
+end
+
+function youtube_thumbail(path)
+    if not yt_thumbnail then
+        debug_log(mp.get_property("path"))
+        if not yt_failed and string.find(mp.get_property("path"), "www.youtube.com") then
+        	-- generate a url to the thumbnail file
+        	vid_id = mp.get_property("filename")
+        	vid_id = string.gsub(vid_id, "watch%?v=", "") -- Strip possible prefix.
+        	vid_id = string.sub(vid_id, 1, 11) -- Strip possible suffix.
+        	
+        	thumb_url = "https://i.ytimg.com/vi/" .. vid_id .. "/maxresdefault.jpg"
+        	
+        	local dl_process = mp.command_native({
+        	    name = "subprocess",
+        	    playback_only = true,
+        	    args = {"curl", "-L", "-s", "-o", shot_path, thumb_url},
+        	})
+        	
+        	if dl_process.status == 0 then
+        	    yt_thumbnail = true
+                return true
+        	end
+        end
+        yt_failed = true
+        return false
+    end
+    return true
 end
 
 function media_type()
@@ -193,6 +229,8 @@ function start_register_event()
         notify_current_file()
         start_of_file = true
         new_file = false
+        yt_thumbnail = false
+        yt_failed = false
         mp.observe_property("media-title", nil, notify_metadata_updated)
         mp.observe_property("metadata", nil, notify_metadata_updated)
         mp.observe_property("chapter", nil, notify_metadata_updated)
