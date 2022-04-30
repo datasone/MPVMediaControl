@@ -72,7 +72,7 @@ end
 function save_shot(path)
     result = mp.commandv("screenshot-to-file", path)
     if not result then
-        mp.add_timeout(0.1, function() save_shot(path) end)
+        mp.add_timeout(0.5, function() save_shot(path) end)
     else
         local shot_path_encoded = encode_element(shot_path)
         message_content = "^[setShot](pid=" .. pid .. ")(shot_path=" .. shot_path_encoded .. ")$"
@@ -179,12 +179,16 @@ end
 
 mp.set_property("options/input-ipc-server", "\\\\.\\pipe\\mpvsocket_" .. pid)
 
-mp.register_event("file-loaded", notify_current_file)
-mp.observe_property("media-title", nil, notify_metadata_updated)
-mp.observe_property("metadata", nil, notify_metadata_updated)
-mp.observe_property("chapter", nil, notify_metadata_updated)
-mp.register_event("end-file", play_state_changed)
-mp.observe_property("core-idle", nil, play_state_changed)
+function start_register_event()
+    mp.observe_property("media-title", nil, notify_metadata_updated)
+    mp.observe_property("metadata", nil, notify_metadata_updated)
+    mp.observe_property("chapter", nil, notify_metadata_updated)
+    mp.register_event("end-file", play_state_changed)
+    mp.observe_property("core-idle", nil, play_state_changed)
+    notify_current_file()
+end
+
+mp.register_event("playback-restart", start_register_event)
 
 function on_quit()
     if shot_path then
