@@ -100,7 +100,7 @@ function notify_metadata_updated()
     artist = get_metadata(metadata, { "artist", "ARTIST", "Artist" })
     title = get_metadata(metadata, { "title", "TITLE", "Title", "icy-title" })
 
-    if not artist or artist == "" or not title or title == "" then
+    if media_type() == "music" and (not artist or artist == "" or not title or title == "") then
         chapter_metadata = mp.get_property_native("chapter-metadata")
 
         if chapter_metadata then
