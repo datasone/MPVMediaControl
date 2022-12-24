@@ -11,7 +11,9 @@ This tool adds SMTC feature to mpv player, it communicates with mpv by named pip
 - Media controls (play/pause, prev, next)
 
 ## Usage
-Put `notify_media.lua` in mpv's `scripts` directory and change path in the script to the real path of `MPVMediaControl.exe`.
+Put `notify_media.lua` in mpv's `scripts` directory and place `MPVMediaControl.exe` to `~~/bin`.
+
+You can change the default settings via the `notify_media.conf` file.
 
 A `Reset SMTC` item in menu will reset the state of SMTC, useful when Windows is glitched and controls are not working properly (e.g. not displaying or disappearing).
 
