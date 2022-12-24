@@ -1,15 +1,24 @@
-DEBUG = false
--- Change this to the location of MPVMediaControl.exe, use \\ for path separator
-MPVMC_PATH = "X:\\path\\to\\MPVMediaControl.exe"
--- If you want to delay taking screenshot for videos, set this to the number of delayed seconds
-DELAYED_SEC = 3
-
+local mp = require 'mp'
 local utils = require 'mp.utils'
-pid = utils.getpid()
-start_of_file = true
-new_file = false
-yt_thumbnail = false
-yt_failed = false
+local opt = require 'mp.options'
+
+local o = {
+    debug = false,
+    -- Path to executable (MPVMediaControl.exe)
+    binary_path = "~~/bin/MPVMediaControl.exe",
+    -- If you want to delay taking screenshot for videos, set this to the number of delayed seconds
+    delayed_sec = 3,
+}
+
+opt.read_options(o, "notify_media")
+
+o.binary_path = mp.command_native({ "expand-path", o.binary_path })
+
+local pid = utils.getpid()
+local start_of_file = true
+local new_file = false
+local yt_thumbnail = false
+local yt_failed = false
 
 -- Print contents of `tbl`, with indentation.
 -- `indent` sets the initial level of indentation.
@@ -29,7 +38,7 @@ function tprint (tbl, indent)
 end
 
 function debug_log(message)
-    if DEBUG then
+    if o.debug then
         if not message then
             print("DEBUG: nil")
             return
@@ -82,8 +91,8 @@ function save_shot(path)
         write_to_socket(message_content)
         return
     end
-    if start_of_file and media_type() == "video" and DELAYED_SEC ~= 0 then
-        mp.add_timeout(DELAYED_SEC, function() save_shot(path) end)
+    if start_of_file and media_type() == "video" and o.delayed_sec ~= 0 then
+        mp.add_timeout(o.delayed_sec, function() save_shot(path) end)
         start_of_file = false
         return
     end
@@ -218,7 +227,7 @@ function run_mpvmc_program()
         capture_stdout = false,
         capture_stderr = false,
         detach = true,
-        args = { MPVMC_PATH },
+        args = { o.binary_path },
     })
 end
 
