@@ -40,6 +40,8 @@ e.g.
 ### Parameters
 - Common parameters
   - `pid={num}`: the player's pid. This is a mandatory parameter for every command, it is used to identify different instances.
+  - `socket_name={String}`: the name of MPV's input-ipc-server socket. This is mandatory for every command, and the value is **directly** the name string.
+    - Though Windows allows Unicode named pipes, it will make things more complex and I didn't see any benefits to use non-ASCII characters.
 - Parameters for `setFile`
   - `title={hexString}`: the title of the media file
   - `artist={hexString}`: the artist of the media file, music files only. The value can be empty.
@@ -54,4 +56,4 @@ The `hexString` mentioned above means the original string should be encoded to h
 - Parameters for `setQuit`
   - `quit=true`: this is always true if you want to quit
 
-The media control part works by sending commands to mpv's ipc socket, which `notify_media.lua` will set mpv to listen on, called `mpvsocket_{pid}`.
+The media control part works by sending commands to mpv's ipc socket, which `notify_media.lua` will set mpv to listen on, with the configured `socket_name` in `notify_media.conf`.
