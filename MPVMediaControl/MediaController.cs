@@ -203,7 +203,9 @@ namespace MPVMediaControl
 
         public void UpdateShotPath(string path)
         {
-            File.ShotPath = path.Replace('/', '\\');
+            var shotPath = path.Replace('/', '\\');
+            shotPath = shotPath.Replace("\\\\", "\\");
+            File.ShotPath = shotPath;
             File.ThumbnailObtained = false;
 
             try
