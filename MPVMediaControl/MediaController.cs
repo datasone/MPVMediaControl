@@ -15,6 +15,7 @@ namespace MPVMediaControl
         private MediaPlayer _mediaPlayer;
 
         public readonly int Pid;
+        private readonly string SocketName;
 
         public class MCMediaFile
         {
@@ -166,9 +167,10 @@ namespace MPVMediaControl
             }
         }
         
-        public MediaController(int pid, bool initSMTC)
+        public MediaController(int pid, string socketName, bool initSMTC)
         {
-            this.Pid = pid;
+            Pid = pid;
+            SocketName = socketName;
             _state = PlayState.Stop;
 
             if (initSMTC)
@@ -179,7 +181,7 @@ namespace MPVMediaControl
 
         public MediaController DuplicateSelf()
         {
-            var newObj = new MediaController(Pid, false);
+            var newObj = new MediaController(Pid, SocketName, false);
             newObj._file = _file.Clone();
             newObj._state = _state;
             return newObj;
@@ -238,22 +240,22 @@ namespace MPVMediaControl
 
         private void Play()
         {
-            PipeClient.SendCommand(Pid, "{ \"command\": [\"set_property\", \"pause\", false] }\r\n");
+            PipeClient.SendCommand(SocketName, "{ \"command\": [\"set_property\", \"pause\", false] }\r\n");
         }
 
         private void Pause()
         {
-            PipeClient.SendCommand(Pid, "{ \"command\": [\"set_property\", \"pause\", true] }\r\n");
+            PipeClient.SendCommand(SocketName, "{ \"command\": [\"set_property\", \"pause\", true] }\r\n");
         }
 
         private void Next()
         {
-            PipeClient.SendCommand(Pid, "{ \"command\": [\"playlist-next\", \"weak\"] }\r\n");
+            PipeClient.SendCommand(SocketName, "{ \"command\": [\"playlist-next\", \"weak\"] }\r\n");
         }
 
         private void Previous()
         {
-            PipeClient.SendCommand(Pid, "{ \"command\": [\"playlist-prev\", \"weak\"] }\r\n");
+            PipeClient.SendCommand(SocketName, "{ \"command\": [\"playlist-prev\", \"weak\"] }\r\n");
         }
     }
 }

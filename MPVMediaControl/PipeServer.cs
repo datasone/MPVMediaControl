@@ -169,7 +169,8 @@ namespace MPVMediaControl
 #endif
 
                 var pid = int.Parse(parameters["pid"]);
-                var controller = Program.AppContext.GetController(pid);
+                var socketName = parameters["socket_name"];
+                var controller = Program.AppContext.GetController(pid, socketName);
 
                 switch (commandName)
                 {

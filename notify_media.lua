@@ -8,6 +8,8 @@ local o = {
     binary_path = "~~/bin/MPVMediaControl.exe",
     -- If you want to delay taking screenshot for videos, set this to the number of delayed seconds
     delayed_sec = 3,
+    -- Name of mpv's input-ipc-server (defaults to mpvsocket_{pid}), string "{pid}" in the value will be automatically replaced with the ID of mpv process
+    socket_name = "mpvsocket_{pid}",
 }
 
 opt.read_options(o, "notify_media")
@@ -19,6 +21,7 @@ local start_of_file = true
 local new_file = false
 local yt_thumbnail = false
 local yt_failed = false
+local mpv_socket_name = o.socket_name:gsub("{pid}", tostring(pid))
 
 -- Print contents of `tbl`, with indentation.
 -- `indent` sets the initial level of indentation.
@@ -87,7 +90,7 @@ end
 function save_shot(path)
     if youtube_thumbail(path) then
         local shot_path_encoded = encode_element(shot_path)
-        message_content = "^[setShot](pid=" .. pid .. ")(shot_path=" .. shot_path_encoded .. ")$"
+        message_content = "^[setShot](pid=" .. pid .. ")(shot_path=" .. shot_path_encoded .. ")(socket_name=" .. mpv_socket_name .. ")$"
         write_to_socket(message_content)
         return
     end
@@ -101,7 +104,7 @@ function save_shot(path)
         mp.add_timeout(0.5, function() save_shot(path) end)
     else
         local shot_path_encoded = encode_element(shot_path)
-        message_content = "^[setShot](pid=" .. pid .. ")(shot_path=" .. shot_path_encoded .. ")$"
+        message_content = "^[setShot](pid=" .. pid .. ")(shot_path=" .. shot_path_encoded .. ")(socket_name=" .. mpv_socket_name .. ")$"
         write_to_socket(message_content)
     end
 end
@@ -198,7 +201,7 @@ function notify_metadata_updated()
         save_shot(shot_path)
     end
 
-    message_content = "^[setFile](pid=" .. pid .. ")(title=" .. title .. ")(artist=" .. artist .. ")(path=" .. path .. ")(type=" .. media_type() .. ")$"
+    message_content = "^[setFile](pid=" .. pid .. ")(title=" .. title .. ")(artist=" .. artist .. ")(path=" .. path .. ")(type=" .. media_type() .. ")(socket_name=" .. mpv_socket_name .. ")$"
     write_to_socket(message_content)
 end
 
@@ -206,7 +209,7 @@ function play_state_changed()
     idle = mp.get_property_native("core-idle")
     is_playing = not idle
 
-    message_content = "^[setState](pid=" .. pid .. ")(playing=" .. tostring(is_playing) .. ")$"
+    message_content = "^[setState](pid=" .. pid .. ")(playing=" .. tostring(is_playing) .. ")(socket_name=" .. mpv_socket_name .. ")$"
     write_to_socket(message_content)
 
     if not idle then
@@ -233,7 +236,7 @@ function run_mpvmc_program()
     })
 end
 
-mp.set_property("options/input-ipc-server", "\\\\.\\pipe\\mpvsocket_" .. pid)
+mp.set_property("options/input-ipc-server", "\\\\.\\pipe\\" .. mpv_socket_name)
 
 function start_register_event()
     if new_file then
@@ -257,7 +260,7 @@ function on_quit()
     if shot_path then
         os.remove(shot_path)
     end
-    write_to_socket("^[setQuit](pid=" .. pid .. ")(quit=true)$")
+    write_to_socket("^[setQuit](pid=" .. pid .. ")(quit=true)(socket_name=" .. mpv_socket_name .. ")$")
 end
 
 mp.register_event("shutdown", on_quit)

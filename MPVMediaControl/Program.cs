@@ -59,11 +59,11 @@ namespace MPVMediaControl
             _controllers = new List<MediaController>();
         }
 
-        public MediaController GetController(int pid)
+        public MediaController GetController(int pid, string socketName)
         {
             if (_controllers.FindIndex(c => c.Pid == pid) == -1)
             {
-                _controllers.Add(new MediaController(pid, true));
+                _controllers.Add(new MediaController(pid, socketName, true));
                 return _controllers.Last();
             }
 
