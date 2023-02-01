@@ -6,6 +6,8 @@ local o = {
     debug = false,
     -- Path to executable (MPVMediaControl.exe)
     binary_path = "~~/bin/MPVMediaControl.exe",
+    -- Path for storing temporary screenshots
+    shot_path = "~~/",
     -- If you want to delay taking screenshot for videos, set this to the number of delayed seconds
     delayed_sec = 3,
     -- Name of mpv's input-ipc-server (defaults to mpvsocket_{pid}), string "{pid}" in the value will be automatically replaced with the ID of mpv process
@@ -195,8 +197,8 @@ function notify_metadata_updated()
     end
     path = encode_element(path)
 
-    local user_path = mp.command_native({"expand-path", "~~/"})
-    shot_path = user_path .. "\\" .. pid .. ".jpg"
+    local shot_dir = mp.command_native({ "expand-path", o.shot_path })
+    shot_path = shot_dir .. "\\" .. pid .. ".jpg"
     if mp.get_property("video-codec") then
         save_shot(shot_path)
     end
