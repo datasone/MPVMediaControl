@@ -48,6 +48,7 @@ namespace MPVMediaControl
                 Icon = new Icon(SystemIcons.Application, 32, 32),
                 ContextMenu = new ContextMenu(new []
                 {
+                    new MenuItem("Edit media control commands", ShowEditWindow),
                     new MenuItem("Reset SMTC", ResetControllers),
                     new MenuItem("Exit", Exit)
                 }),
@@ -75,6 +76,11 @@ namespace MPVMediaControl
             var controller = _controllers.Find(c => c.Pid == pid);
             controller.Cleanup(true);
             _controllers.Remove(controller);
+        }
+
+        private static void ShowEditWindow(object sender, EventArgs e)
+        {
+            new CommandEditor().Show();
         }
 
         private async void ResetControllers(object sender, EventArgs e)

@@ -1,10 +1,12 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using Windows.Media;
 using Windows.Media.Playback;
 using Windows.Storage;
 using Windows.Storage.Streams;
+using Windows.UI.Text;
 
 namespace MPVMediaControl
 {
@@ -242,22 +244,36 @@ namespace MPVMediaControl
 
         private void Play()
         {
-            PipeClient.SendCommand(SocketName, "{ \"command\": [\"set_property\", \"pause\", false] }\r\n");
+            PipeClient.SendCommand(SocketName, CommandToMpv(Properties.Settings.Default.PlayCommand));
         }
 
         private void Pause()
         {
-            PipeClient.SendCommand(SocketName, "{ \"command\": [\"set_property\", \"pause\", true] }\r\n");
+            PipeClient.SendCommand(SocketName, CommandToMpv(Properties.Settings.Default.PauseCommand));
         }
 
         private void Next()
         {
-            PipeClient.SendCommand(SocketName, "{ \"command\": [\"playlist-next\", \"weak\"] }\r\n");
+            PipeClient.SendCommand(SocketName, CommandToMpv(Properties.Settings.Default.NextCommand));
         }
 
         private void Previous()
         {
-            PipeClient.SendCommand(SocketName, "{ \"command\": [\"playlist-prev\", \"weak\"] }\r\n");
+            PipeClient.SendCommand(SocketName, CommandToMpv(Properties.Settings.Default.PrevCommand));
+        }
+
+        private string CommandToMpv(string cmd)
+        {
+            var args = cmd.Split(' ');
+            var argsParsed = args.Select(s =>
+            {
+                if (s == "true" || s == "false") return s;
+                if (long.TryParse(s, out _) || float.TryParse(s, out _)) return s;
+                return $"\"{s}\"";
+            });
+
+            var cmdArgs = string.Join(", ", argsParsed);
+            return $"{{ \"command\": [{cmdArgs}] }}\r\n";
         }
     }
 }
