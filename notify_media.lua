@@ -263,6 +263,13 @@ function on_quit()
         os.remove(shot_path)
     end
     write_to_socket("^[setQuit](pid=" .. pid .. ")(quit=true)(socket_name=" .. mpv_socket_name .. ")$")
+    
+    -- Force kill MPVMediaControl.exe
+    mp.command_native({
+        name = "subprocess",
+        playback_only = false,
+        args = {"taskkill", "/F", "/IM", "MPVMediaControl.exe"},
+    })
 end
 
 mp.register_event("shutdown", on_quit)
