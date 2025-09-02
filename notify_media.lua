@@ -12,6 +12,8 @@ local o = {
     delayed_sec = 3,
     -- Name of mpv's input-ipc-server (defaults to mpvsocket_{pid}), string "{pid}" in the value will be automatically replaced with the ID of mpv process
     socket_name = "mpvsocket_{pid}",
+    -- Should we kill MPVMediaControl when mpv exits, as sometimes the program won't exit properly with mpv
+    kill_mc = false,
 }
 
 opt.read_options(o, "notify_media")
@@ -264,12 +266,14 @@ function on_quit()
     end
     write_to_socket("^[setQuit](pid=" .. pid .. ")(quit=true)(socket_name=" .. mpv_socket_name .. ")$")
     
-    -- Force kill MPVMediaControl.exe
-    mp.command_native({
-        name = "subprocess",
-        playback_only = false,
-        args = {"taskkill", "/F", "/IM", "MPVMediaControl.exe"},
-    })
+    if o.kill_mc then
+        -- Force kill MPVMediaControl.exe
+        mp.command_native({
+            name = "subprocess",
+            playback_only = false,
+            args = {"taskkill", "/F", "/IM", "MPVMediaControl.exe"},
+        })
+    end
 end
 
 mp.register_event("shutdown", on_quit)
